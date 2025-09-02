@@ -75,8 +75,8 @@ public class ProductServiceImpl implements ProductService {
         Pageable pageDetails = PageRequest.of(pageNumber,pageSize,sortByAndOrder);
         Page<Product> productPage = productRepository.findAll(pageDetails);
         List<Product> productList = productPage.getContent();
-        if (productList.isEmpty())
-            throw new APIException("No Product created till now.");
+//        if (productList.isEmpty())
+//            throw new APIException("No Product created till now.");
 
         List<Product> products= productRepository.findAll();
         List<ProductDTO> productDTOS = products.stream()
