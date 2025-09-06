@@ -17,7 +17,7 @@ import java.util.Set;
 @Table(name = "users",
        uniqueConstraints = {
         @UniqueConstraint(columnNames = "username"),
-        @UniqueConstraint(columnNames = "emailId")
+        @UniqueConstraint(columnNames = "email")
        })
 public class Users {
     @Id
@@ -33,8 +33,8 @@ public class Users {
     @NotBlank
     @Email
     @Size(max = 50)
-    @Column(name = "emailId")
-    private String emailId;
+    @Column(name = "email")
+    private String email;
 
     @NotBlank
     @Size(max = 120)
@@ -43,7 +43,7 @@ public class Users {
 
     public Users(String userName, String emailId, String password) {
         this.userName = userName;
-        this.emailId = emailId;
+        this.email = emailId;
         this.password = password;
     }
 
@@ -70,6 +70,10 @@ public class Users {
             cascade = {CascadeType.PERSIST,CascadeType.MERGE},
              orphanRemoval = true)
     private Set<Product> products;
+
+    @ToString.Exclude
+    @OneToOne(mappedBy = "users",cascade = {CascadeType.PERSIST,CascadeType.MERGE},orphanRemoval = true)
+    private Cart cart;
 
 
 }

@@ -13,7 +13,9 @@ import com.ecommerce.project.security.response.UserInfoResponse;
 import com.ecommerce.project.security.services.UserDetailImpl;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -65,13 +67,13 @@ public class AuthController {
         }
         SecurityContextHolder.getContext().setAuthentication(authentication);
         UserDetailImpl userDetails = (UserDetailImpl) authentication.getPrincipal();
-        String jwtToken = jwtUtils.generateTokenFromUsername(userDetails);
+        ResponseCookie jwtCookie = jwtUtils.generateJwtCookie(userDetails);
         List<String> roles = userDetails.getAuthorities().stream()
                 .map(item -> item.getAuthority())
                 .collect(Collectors.toList());
-        UserInfoResponse response = new UserInfoResponse(userDetails.getId(), userDetails.getUsername(),roles ,jwtToken);
+        UserInfoResponse response = new UserInfoResponse(userDetails.getId(), userDetails.getUsername(),roles,jwtCookie.toString() );
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE,jwtCookie.toString()).body(response);
     }
 
     @PostMapping("/signup")
@@ -81,7 +83,7 @@ public class AuthController {
                     .badRequest().
                     body(new MessageResponse("Error : Username is already taken!"));
         }
-        if(userRepository.existsByEmailId(signupRequest.getEmail())){
+        if(userRepository.existsByEmail(signupRequest.getEmail())){
             return ResponseEntity
                     .badRequest()
                     .body(new MessageResponse("Error : Email is already taken!"));
@@ -123,6 +125,32 @@ public class AuthController {
         users.setRoles(roles);
         userRepository.save(users);
         return ResponseEntity.ok(new MessageResponse("User registered successfully"));
+    }
+
+    @GetMapping("/username")
+    public String currentUserName(Authentication authentication){
+        if(authentication != null)
+            return authentication.getName();
+        else
+            return "";
+    }
+
+    @GetMapping("/user")
+    public ResponseEntity<UserInfoResponse> getUserDetails(Authentication authentication){
+        UserDetailImpl userDetails = (UserDetailImpl) authentication.getPrincipal();
+
+        List<String> roles = userDetails.getAuthorities().stream()
+                .map(item -> item.getAuthority())
+                .collect(Collectors.toList());
+        UserInfoResponse response = new UserInfoResponse(userDetails.getId(), userDetails.getUsername(),roles );
+
+        return ResponseEntity.ok().body(response);
+    }
+
+    @PostMapping("/signout")
+    public ResponseEntity<?> signoutuser(){
+        ResponseCookie cookie = jwtUtils.getCleanJwtCookie();
+        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE,cookie.toString()).body(new MessageResponse("you have been signed out"));
     }
 
 }
